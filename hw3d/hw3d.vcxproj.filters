@@ -43,7 +43,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DXErr.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\Dxerr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -75,7 +75,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DXErr.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Dxerr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
