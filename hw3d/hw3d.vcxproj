@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="DXErr.cpp" />
+    <ClCompile Include="DxgiInfoManager.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="HwException.cpp" />
     <ClCompile Include="HwTimer.cpp" />
@@ -143,6 +144,7 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="DXErr.h" />
+    <ClInclude Include="DxgiInfoManager.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="HwException.h" />
     <ClInclude Include="HwTimer.h" />

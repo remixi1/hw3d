@@ -45,6 +45,9 @@
     <ClCompile Include="DXErr.cpp">
       <Filter>Header Files\Dxerr</Filter>
     </ClCompile>
+    <ClCompile Include="DxgiInfoManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -76,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="DXErr.h">
       <Filter>Header Files\Dxerr</Filter>
+    </ClInclude>
+    <ClInclude Include="DxgiInfoManager.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
