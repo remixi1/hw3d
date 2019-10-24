@@ -5,6 +5,11 @@
 #include <memory>
 #include <algorithm>
 #include "HwMath.h"
+#include "Surface.h"
+#include "GDIPlusManager.h"
+
+GDIPlusManager gdipm;
+
 
 App::App()
 	:
@@ -57,7 +62,7 @@ App::App()
 	Factory f(wnd.Gfx());
 	drawables.reserve(nDrawables);
 	std::generate_n(std::back_inserter(drawables), nDrawables, f);
-
+	const auto s = Surface::FromFile("Images\\kappa50.png");
 
 	wnd.Gfx().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 }
