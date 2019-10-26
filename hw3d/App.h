@@ -1,6 +1,7 @@
 #pragma once
 #include "Window.h"
 #include "HwTimer.h"
+#include "ImguiManager.h"
 
 class App
 {
@@ -15,6 +16,7 @@ private:
 
 private:
 
+	ImguiManager imgui;
 	Window wnd;
 	HwTimer timer;
 	std::vector<std::unique_ptr<class Drawable>> drawables;
