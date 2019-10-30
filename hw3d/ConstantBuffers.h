@@ -6,7 +6,7 @@ template<typename C>
 class ConstantBuffer : public Bindable
 {
 public:
-	void update(Graphics& gfx, const C& consts)
+	void Update(Graphics& gfx, const C& consts)
 	{
 		INFOMAN(gfx);
 
