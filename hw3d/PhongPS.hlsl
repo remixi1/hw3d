@@ -13,6 +13,8 @@ cbuffer LightCBuf
 cbuffer ObjectCBuf
 {
     float3 materialColor;
+    float specularIntensity;
+    float specularPower;
 };
 
 float4 main(float3 worldPos : Position, float3 n : Normal) : SV_Target
@@ -24,5 +26,11 @@ float4 main(float3 worldPos : Position, float3 n : Normal) : SV_Target
 
     const float att = 1.0f / (attConst + attLin * distTol + attQuad * (distTol * distTol));
     const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(dirTol, n));
-    return float4(saturate((diffuse + ambient) * materialColor), 1.0f);
+
+    const float3 w = n * dot(vTol, n);
+    const float3 r = w * 2.0f - vTol;
+
+    const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);
+
+    return float4(saturate((diffuse + ambient + specular) * materialColor), 1.0f);
 }
