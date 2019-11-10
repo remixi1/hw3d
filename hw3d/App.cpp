@@ -4,6 +4,7 @@
 #include "Cylinder.h"
 #include "Pyramid.h"
 #include "SkinnedBox.h"
+#include "AssTest.h"
 #include <memory>
 #include <algorithm>
 #include "HwMath.h"
@@ -24,11 +25,7 @@ App::App()
 	wnd(800, 600, " The Donkey fart box "),
 	light(wnd.Gfx())
 {
-	Assimp::Importer imp;
-	auto model = imp.ReadFile("models\\suzanne.obj",
-		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices
-	);
+	
 
 	class Factory
 	{
@@ -63,6 +60,11 @@ App::App()
 					gfx, rng, adist, ddist,
 					odist, rdist
 					);
+			case 4:
+				return std::make_unique<AssTest>(
+					gfx, rng, adist, ddist,
+					odist, rdist, mat, 1.5f
+					);
 			default:
 				assert(false && "impossible drawable option in factory");
 				return {};
@@ -72,7 +74,7 @@ App::App()
 	private:
 		Graphics& gfx;
 		std::mt19937 rng{ std::random_device{}() };
-		std::uniform_int_distribution<int> sdist{ 0,3 };
+		std::uniform_int_distribution<int> sdist{ 0,4 };
 		std::uniform_real_distribution<float> adist{ 0.0f,PI * 2.0f };
 		std::uniform_real_distribution<float> ddist{ 0.0f,PI * 0.5f };
 		std::uniform_real_distribution<float> odist{ 0.0f,PI * 0.08f };

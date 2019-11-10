@@ -164,7 +164,7 @@ void Graphics::BeginFrame(float red, float green, float blue) noexcept
 }
 void Graphics::DrawIndexed(UINT count) noexcept(!IS_DEBUG)
 {
-	/*GFX_THROW_INFO_ONLY*/(pContext->DrawIndexed(count, 0u, 0u));
+	GFX_THROW_INFO_ONLY(pContext->DrawIndexed(count, 0u, 0u));
 }
 
 void Graphics::SetProjection(DirectX::FXMMATRIX proj) noexcept
