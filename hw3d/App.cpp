@@ -15,9 +15,11 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+
 namespace dx = DirectX;
 
 GDIPlusManager gdipm;
+
 
 
 App::App()
