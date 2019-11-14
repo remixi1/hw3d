@@ -172,7 +172,7 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="AssTest.cpp" />
     <ClCompile Include="Bindable.cpp" />
-    <ClCompile Include="Cameracpp.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="DXErr.cpp" />
     <ClCompile Include="DxgiInfoManager.cpp" />

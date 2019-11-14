@@ -18,9 +18,10 @@ private:
 
 	void DoFrame();
 	void ShowImguiDemoWindow();
-
+	void ShowRawInputWindow();
 private:
-
+	bool showDemoWindow = false;
+	int x = 0, y = 0;
 	ImguiManager imgui;
 	Window wnd;
 	HwTimer timer;
