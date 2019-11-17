@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include "Imgui/imgui.h"
+#include "Surface.h"
 #include <unordered_map>
 #include <sstream>
 
@@ -26,7 +27,7 @@ const char* ModelException::GetType() const noexcept
 {
 	return "HwException Model Exception";
 }
-const std::string ModelException::GetNote() const noexcept
+const std::string& ModelException::GetNote() const noexcept
 {
 	return note;
 }
@@ -66,8 +67,9 @@ DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 
 
 // Node
-Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform_in) noxnd
+Node::Node(int id,const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform_in) noxnd
 	:
+id(id),
 meshPtrs(std::move(meshPtrs)),
 	name(name)
 {
@@ -95,23 +97,22 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	assert(pChild);
 	childPtrs.push_back(std::move(pChild));
 }
-void Node::ShowTree(int& nodeIndexTracked,std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept
+void Node::ShowTree(Node*& pSelectedNode) const noexcept
 {
-	const int currentNodeIndex = nodeIndexTracked;
-	nodeIndexTracked++;
+	const int selectedId = (pSelectedNode == nullptr) ? -1 : pSelectedNode->GetId();
 
 	const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow
-		| ((currentNodeIndex == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)
+		| ((GetId() == selectedId) ? ImGuiTreeNodeFlags_Selected : 0)
 		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);
 
 	// render this node
 	const auto expanded = ImGui::TreeNodeEx(
-		(void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()
+		(void*)(intptr_t)GetId(), node_flags, name.c_str()
 	);
 	// processing for selecting node
 	if (ImGui::IsItemClicked())
 	{
-		selectedIndex = currentNodeIndex;
+		
 		pSelectedNode = const_cast<Node*>(this);
 	}
 	// recursive rendering of open node's children
@@ -119,7 +120,7 @@ void Node::ShowTree(int& nodeIndexTracked,std::optional<int>& selectedIndex, Nod
 	{
 		for (const auto& pChild : childPtrs)
 		{
-			pChild->ShowTree(nodeIndexTracked,selectedIndex, pSelectedNode);
+			pChild->ShowTree( pSelectedNode);
 		}
 		ImGui::TreePop();
 	}
@@ -128,6 +129,11 @@ void Node::SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept
 {
 	dx::XMStoreFloat4x4(&appliedTransform, transform);
 }
+int Node::GetId() const noexcept
+{
+	return id;
+}
+
 
 
 
@@ -143,12 +149,12 @@ public:
 		if (ImGui::Begin(windowName))
 		{
 			ImGui::Columns(2, nullptr, true);
-			root.ShowTree(nodeIndexTracker, selectedIndex, pSelectedNode);
+			root.ShowTree(  pSelectedNode);
 
 			ImGui::NextColumn();
 			if (pSelectedNode != nullptr)
 			{
-				auto& transform = transforms[*selectedIndex];
+				auto& transform = transforms[pSelectedNode->GetId()];
 				ImGui::Text("Orientation");
 				ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f);
 				ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f);
@@ -163,7 +169,8 @@ public:
 	}
 	dx::XMMATRIX GetTransform() const noexcept
 	{
-		const auto& transform = transforms.at( *selectedIndex );
+		assert(pSelectedNode != nullptr);
+		const auto& transform = transforms.at( pSelectedNode->GetId() );
 		return 
 			dx::XMMatrixRotationRollPitchYaw( transform.roll,transform.pitch,transform.yaw ) *
 			dx::XMMatrixTranslation( transform.x,transform.y,transform.z );
@@ -173,7 +180,7 @@ public:
 		return pSelectedNode;
 	}
 private:
-	std::optional<int> selectedIndex;
+	
 	Node* pSelectedNode;
 	struct TransformParameters
 	{
@@ -207,10 +214,11 @@ Model::Model(Graphics& gfx, const std::string fileName)
 
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
-		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i]));
+		meshPtrs.push_back( ParseMesh( gfx,*pScene->mMeshes[i],pScene->mMaterials ) );
 	}
 
-	pRoot = ParseNode(*pScene->mRootNode);
+	int nextId = 0;
+	pRoot = ParseNode(nextId,*pScene->mRootNode);
 }
 void Model::Draw(Graphics& gfx) const noxnd
 {
@@ -229,22 +237,25 @@ Model::~Model() noexcept
 {}
 
 
-std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
+std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const aiMaterial* const* pMaterials)
 {
-	namespace dx = DirectX;
+	
 	using Dvtx::VertexLayout;
 
 	Dvtx::VertexBuffer vbuf(std::move(
 		VertexLayout{}
 		.Append(VertexLayout::Position3D)
 		.Append(VertexLayout::Normal)
+		.Append(VertexLayout::Texture2D)
 	));
 
+	
 	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
 	{
 		vbuf.EmplaceBack(
 			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mVertices[i]),
-			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i])
+			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
 		);
 	}
 
@@ -261,6 +272,33 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 
 	std::vector<std::unique_ptr<Bind::Bindable>> bindablePtrs;
 
+	bool hasSpecularMap = false;
+	float shininess = 35.0f;
+	if (mesh.mMaterialIndex >= 0)
+	{
+		
+		auto& material = *pMaterials[mesh.mMaterialIndex];
+
+		using namespace std::string_literals;
+		const auto base = "Models\\nano_textured\\"s;
+		aiString texFileName;
+
+		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
+		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str())));
+
+		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS)
+		{
+			bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()),1));
+			hasSpecularMap = true;
+		}
+		else
+		{
+			material.Get(AI_MATKEY_SHININESS, shininess);
+		}
+		bindablePtrs.push_back(std::make_unique<Bind::Sampler>(gfx));
+	}
+
+
 	bindablePtrs.push_back(std::make_unique<Bind::VertexBuffer>(gfx, vbuf));
 
 	bindablePtrs.push_back(std::make_unique<Bind::IndexBuffer>(gfx, indices));
@@ -269,22 +307,29 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 	auto pvsbc = pvs->GetBytecode();
 	bindablePtrs.push_back(std::move(pvs));
 
-	bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPS.cso"));
-
 	bindablePtrs.push_back(std::make_unique<Bind::InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc));
 
-	struct PSMaterialConstant
+	if (hasSpecularMap)
 	{
-		DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f };
-		float specularIntensity = 0.6f;
-		float specularPower = 30.0f;
-		float padding[3];
-	} pmc;
-	bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+		bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPSSpecMap.cso"));
+	}
+	else
+	{
+		bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPS.cso"));
 
+		struct PSMaterialConstant
+		{
+
+			float specularIntensity = 0.8f;
+			float specularPower;
+			float padding[2];
+		} pmc;
+		pmc.specularPower = shininess;
+		bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+	}
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
-std::unique_ptr<Node> Model::ParseNode(const aiNode& node) noexcept
+std::unique_ptr<Node> Model::ParseNode(int& nextId,const aiNode& node) noexcept
 {
 	namespace dx = DirectX;
 	const auto transform = dx::XMMatrixTranspose(dx::XMLoadFloat4x4(
@@ -299,10 +344,10 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& node) noexcept
 		curMeshPtrs.push_back(meshPtrs.at(meshIdx).get());
 	}
 
-	auto pNode = std::make_unique<Node>(node.mName.C_Str(),std::move(curMeshPtrs), transform);
+	auto pNode = std::make_unique<Node>(nextId++,node.mName.C_Str(),std::move(curMeshPtrs), transform);
 	for (size_t i = 0; i < node.mNumChildren; i++)
 	{
-		pNode->AddChild(ParseNode(*node.mChildren[i]));
+		pNode->AddChild(ParseNode(nextId,*node.mChildren[i]));
 	}
 
 	return pNode;

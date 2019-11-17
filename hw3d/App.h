@@ -18,7 +18,7 @@ private:
 
 	void DoFrame();
 	void ShowImguiDemoWindow();
-	void ShowRawInputWindow();
+	
 private:
 	bool showDemoWindow = false;
 	int x = 0, y = 0;
@@ -29,7 +29,7 @@ private:
 	float speed_factor = 1.0f;
 	Camera cam;
 	PointLight light;
-	Model nano{ wnd.Gfx(),"Models\\nano_hierarchy.gltf" };
+	Model nano{ wnd.Gfx(),"Models\\nano_textured\\nanosuit.obj" };
 	
 };
 
